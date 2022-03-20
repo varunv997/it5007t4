@@ -333,7 +333,6 @@ class ReservationsApp extends React.Component {
 
     const body = await response.text();
     const result = JSON.parse(body, jsonDateReviver);
-    console.log(result.data.reservationList)
     return result.data.reservationList
   }
 
@@ -355,7 +354,6 @@ class ReservationsApp extends React.Component {
 
     const body = await response.text();
     const result = JSON.parse(body, jsonDateReviver);
-    console.log(result.data.blacklist)
     return result.data.blacklist
   }
 
@@ -384,6 +382,14 @@ class ReservationsApp extends React.Component {
     }
   }
 
+  async isCustomerBlacklisted(phoneNo) {
+    const blacklistedCustomers = await this.loadBlacklistData();
+    for (const customer of blacklistedCustomers) {
+      if (customer.phone == phoneNo) return true;
+    }
+    return false;
+  }
+
   async createReservation(reservation) {
     reservation.id = Date.now().toString();
     reservation.created = new Date();
@@ -391,6 +397,12 @@ class ReservationsApp extends React.Component {
       .state
       .reservations
       .slice();
+    
+    if (await this.isCustomerBlacklisted(reservation.phone)) {
+      alert("This customer is blacklisted")
+      return;
+    }
+
     if (newReservationList.length <=24) {
       const query = `mutation {
         createReservation( reservation: {
